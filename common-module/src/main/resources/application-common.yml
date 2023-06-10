@@ -1,0 +1,70 @@
+spring:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      port: 8078
+  datasource:
+    hikari:
+      cachePrepStmts: true
+      prepStmtCacheSize: 250
+      prepStmtCacheSqlLimit: 2048
+      useServerPrepStmts: true
+      useLocalSessionState: true
+      rewriteBatchedStatements: true
+      cacheResultSetMetadata: true
+      cacheServerConfiguration: true
+      elideSetAutoCommits: true
+      maintainTimeStats: false
+  devtools:
+    livereload:
+      enabled: true
+    restart:
+      enabled: false
+  main:
+    allow-bean-definition-overriding: true
+#    properties:
+#      hibernate:
+#        dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+#        format_sql: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui/
+
+
+api:
+  blog:
+    main: kakao
+    kakao:
+      url: https://dapi.kakao.com
+      path: /v2/search/blog
+      headers:
+        Authorization: KakaoAK 298b3a98921581d3ae42613a4003d641
+      queryParamKey: query
+      sortParamKey: sort
+      pageParamKey: page
+      sizeParamKey: size
+    naver:
+      url: https://openapi.naver.com
+      path: /v1/search/blog.json
+      headers:
+        X-Naver-Client-Id: 4IQLhnpiRAj5PimRdsQO
+        X-Naver-Client-Secret: yT1r3tQLQf
+      queryParamKey: query
+      sortParamKey: sort
+      pageParamKey: start
+      sizeParamKey: display
+
+
+---
+## LOCAL
+spring:
+  config:
+    activate:
+      on-profile: local
+  r2dbc:
+    initialization-mode: always
+    url: r2dbc:h2:mem:///searchR2DB;DB_CLOSE_DELAY=-1
+    username: sa
+    password:

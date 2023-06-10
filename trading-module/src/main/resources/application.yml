@@ -1,0 +1,49 @@
+spring:
+  profiles:
+    include:
+      - common
+      - domain
+  datasource:
+    hikari:
+      cachePrepStmts: true
+      prepStmtCacheSize: 250
+      prepStmtCacheSqlLimit: 2048
+      useServerPrepStmts: true
+      useLocalSessionState: true
+      rewriteBatchedStatements: true
+      cacheResultSetMetadata: true
+      cacheServerConfiguration: true
+      elideSetAutoCommits: true
+      maintainTimeStats: false
+  devtools:
+    livereload:
+      enabled: true
+    restart:
+      enabled: false
+  main:
+    allow-bean-definition-overriding: true
+
+server:
+  port: 8080
+  tomcat:
+    max-connections: 100000
+    threads:
+      max: 10000
+  servlet:
+    context-path: /
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+
+logging:
+  level:
+    root: INFO
+    org.springframework.r2dbc.core: debug
+
+blockhound:
+  integration:
+    enabled: true
+
+

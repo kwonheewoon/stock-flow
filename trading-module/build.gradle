@@ -1,0 +1,25 @@
+dependencies {
+
+    developmentOnly 'org.springframework.boot:spring-boot-devtools:3.0.4'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.0.4'
+    testImplementation 'io.projectreactor:reactor-test:3.5.3'
+    testImplementation "org.projectlombok:lombok:${lombokVersion}"
+
+    testImplementation 'com.squareup.okhttp3:mockwebserver:4.10.0'
+
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+
+    implementation group: 'io.projectreactor.tools', name: 'blockhound', version: '1.0.8.RELEASE'
+
+}
+
+task prepareKotlinBuildScriptModel {
+
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+

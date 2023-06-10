@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml" />
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
+
+    <springProfile name="logFile">
+        <property name="LOG_DIR" value="/home/logs" />
+
+        <appender name="application" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>${LOG_DIR}/user_be.log</file>
+            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                <fileNamePattern>${LOG_DIR}/user_be.%d{yyyy-MM-dd}.log</fileNamePattern>
+                <maxHistory>6</maxHistory>
+            </rollingPolicy>
+            <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+                <evaluator>
+                    <expression>return message.contains("[__URL_RESULT__]");</expression>
+                </evaluator>
+                <OnMismatch>NEUTRAL</OnMismatch>
+                <OnMatch>DENY</OnMatch>
+            </filter>
+            <encoder>
+                <pattern> %d{HH:mm:ss.SSS} %highlight([%-5level]) [%thread] %cyan([%logger{36}]) - %m%n</pattern>
+            </encoder>
+        </appender>
+
+        <logger name="io.khw.search" additivity="false" level="INFO">
+            <appender-ref ref="application"/>
+        </logger>
+
+        <logger name="org.springframework" additivity="false" level="INFO">
+            <appender-ref ref="application"/>
+        </logger>
+
+        <logger name="org.hibernate" additivity="false" level="INFO">
+            <appender-ref ref="application"/>
+        </logger>
+
+        <logger name="com.zaxxer.hikari" additivity="false" level="INFO">
+            <appender-ref ref="application"/>
+        </logger>
+
+        <logger name="org.apache.catalina" additivity="false" level="INFO">
+            <appender-ref ref="application"/>
+        </logger>
+
+        <logger name="io.sentry" additivity="false" level="INFO">
+            <appender-ref ref="application"/>
+        </logger>
+
+        <logger name="org.springframework.boot.context.embedded.tomcat" additivity="false" level="INFO">
+            <appender-ref ref="application"/>
+        </logger>
+
+        <logger name="springfox.documentation" additivity="false" level="INFO">
+            <appender-ref ref="application"/>
+        </logger>
+
+        <logger name="okhttp3.OkHttpClient" additivity="false" level="INFO">
+            <appender-ref ref="application"/>
+        </logger>
+
+        <logger name="org.eclipse.jetty.server.AbstractConnector" additivity="false" level="INFO">
+            <appender-ref ref="application"/>
+        </logger>
+
+        <logger name="org.eclipse.jetty.server.handler.ContextHandler.application" additivity="false" level="INFO">
+            <appender-ref ref="application"/>
+        </logger>
+    </springProfile>
+
+
+    <springProfile name="local, dev, prod">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <layout class="ch.qos.logback.classic.PatternLayout">
+                <Pattern>
+                    %d{HH:mm:ss.SSS} %highlight([%-5level]) [%thread] %cyan([%logger{36}]) - %m%n
+                </Pattern>
+            </layout>
+        </appender>
+
+        <logger name="io.khw.search" additivity="false" level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+
+        <logger name="org.springframework" additivity="false" level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+
+        <logger name="org.hibernate.type" level="trace" >
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+
+<!--        <logger name="org.hibernate" additivity="false" level="INFO">-->
+<!--            <appender-ref ref="CONSOLE"/>-->
+<!--        </logger>-->
+
+        <logger name="com.zaxxer.hikari" additivity="false" level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+
+        <logger name="org.apache.catalina" additivity="false" level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+
+        <logger name="io.sentry" additivity="false" level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+
+        <logger name="org.springframework.boot.context.embedded.tomcat" additivity="false" level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+
+        <logger name="springfox.documentation" additivity="false" level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+
+        <logger name="okhttp3.OkHttpClient" additivity="false" level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+
+        <logger name="org.eclipse.jetty.server.AbstractConnector" additivity="false" level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+
+        <logger name="org.eclipse.jetty.server.handler.ContextHandler.application" additivity="false" level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+    </springProfile>
+</configuration>

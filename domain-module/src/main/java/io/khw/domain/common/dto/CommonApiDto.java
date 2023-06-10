@@ -1,0 +1,1 @@
+package io.khw.domain.common.dto;import lombok.Getter;import java.util.List;@Getterpublic class CommonApiDto<T> {    private List<T> documents;    private long totalCount;    public CommonApiDto(List<T> documents, long totalCount) {        this.documents = documents;        this.totalCount = totalCount;    }}

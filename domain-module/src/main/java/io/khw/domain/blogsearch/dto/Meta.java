@@ -1,0 +1,1 @@
+package io.khw.domain.blogsearch.dto;import com.fasterxml.jackson.annotation.JsonProperty;public record Meta(        @JsonProperty("is_end")        boolean isEnd,        @JsonProperty("total_count")        long totalCount) {}

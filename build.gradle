@@ -1,0 +1,82 @@
+buildscript {
+    ext {
+        springBootVersion = '3.0.4'
+        queryDslVersion = "5.0.0"
+        querydslPluginVersion = '1.0.10'
+        lombokVersion = "1.18.26"
+        lombokMapstructBindingVersion = "0.2.0"
+        mapstructVersion = "1.5.3.Final"
+        jjwtVersion = '0.11.2'
+    }
+
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath("gradle.plugin.com.ewerk.gradle.plugins:querydsl-plugin:${querydslPluginVersion}")
+    }
+}
+
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version "${springBootVersion}"
+    id 'com.ewerk.gradle.plugins.querydsl' version "${querydslPluginVersion}"
+}
+
+subprojects {
+    apply plugin: 'java-library'
+    apply plugin: 'org.springframework.boot'
+
+    group = 'io.khw'
+    version = '0.0.1-SNAPSHOT'
+    sourceCompatibility = '17'
+
+    configurations {
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    tasks.named('test') {
+        useJUnitPlatform()
+    }
+}
+
+project(':domain-module') {
+    dependencies {
+        api project(':common-module')
+    }
+
+    test {
+        exclude '**/*'
+    }
+
+}
+
+
+project(':trading-module') {
+    dependencies {
+        implementation project(':domain-module')
+    }
+
+    test {
+        exclude '**/*'
+    }
+
+}
+
+project(':ranking-module') {
+    dependencies {
+        implementation project(':domain-module')
+    }
+
+    test {
+        exclude '**/*'
+    }
+
+}
+
+

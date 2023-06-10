@@ -1,0 +1,1 @@
+package io.khw.domain.blogsearch.dto;import io.swagger.v3.oas.annotations.media.Schema;import java.util.List;@Schema(description = "공통 블로그 검색 반환 API DTO")public record CommonApiResponseDto(        @Schema(description = "검색된 블로그 정보")        List<CommonDocumentDto> documents,        @Schema(description = "검색된 블로그 총합", example = "1234")        long totalCount) {}
