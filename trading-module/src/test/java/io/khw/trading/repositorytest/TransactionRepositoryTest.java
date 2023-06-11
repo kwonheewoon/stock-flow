@@ -1,59 +1,91 @@
 package io.khw.trading.repositorytest;
 
-import io.khw.TradingModuleApplication;
-import io.khw.domain.stock.entity.StockEntity;
 import io.khw.domain.stock.repository.StockRepository;
 import io.khw.domain.transaction.entity.TransactionEntity;
 import io.khw.domain.transaction.repository.TransactionRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
-import org.springframework.boot.test.context.SpringBootTest;
-
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
-import org.springframework.test.context.ActiveProfiles;
-
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-@DataR2dbcTest(properties = "spring.main.allow-bean-definition-overriding=true",
-        includeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = {TransactionRepository.class, StockRepository.class}))
-//@SpringBootTest(classes = TradingModuleApplication.class,webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-//@ActiveProfiles("local")
-public class TransactionRepositoryTest {
 
-    @Autowired
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class TransactionRepositoryTest {
+
+    @Mock
     private TransactionRepository transactionRepository;
 
-    @Autowired
+    @Mock
     private StockRepository stockRepository;
 
-    @BeforeEach
-    public void setup() {
-        // 테스트 데이터를 세팅
-        StockEntity stock = StockEntity.builder().code("377300").name("카카오페이").price(new BigDecimal(68400)).build();
-        TransactionEntity transaction = TransactionEntity.builder().stockId(42L).volume(5).price(new BigDecimal(65000.0)).transactionTime(LocalDateTime.now()).build();
+    @Test
+    @DisplayName("트랜잭션 save 성공 테스트")
+    void testSaveSuccessfulTransaction() {
+        // Arrange
+        LocalDateTime now = LocalDateTime.now();
+        TransactionEntity transaction = new TransactionEntity(20L, 10, BigDecimal.valueOf(1000), now);
+        when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(Mono.just(TransactionEntity.builder().id(1L).stockId(20L).volume(10).price(new BigDecimal(1000)).transactionTime(now).build()));
 
 
-        //stockRepository.save(stock).block();
+        // Act
+        TransactionEntity result = transactionRepository.save(transaction).block();
 
-
-        transactionRepository.save(transaction).block();
+        // Assert
+        assertNotNull(result);
+        assertEquals(transaction.getStockId(), result.getStockId());
+        assertEquals(transaction.getVolume(), result.getVolume());
+        assertEquals(transaction.getPrice(), result.getPrice());
+        assertEquals(transaction.getTransactionTime(), result.getTransactionTime());
     }
 
     @Test
-    public void testFindById() throws InterruptedException {
-        TransactionEntity transaction = transactionRepository.findById(1L).block();
-        Assertions.assertNotNull(transaction);
-        Assertions.assertEquals(1L, transaction.getId());
+    @DisplayName("트랜잭션 save 실패(거래수량 예외) 테스트")
+    void testSaveFailedTransactionWithZeroVolume() {
+        // Arrange
+        assertThrows(IllegalArgumentException.class, () -> {
+            TransactionEntity transaction = new TransactionEntity(1L, 0, BigDecimal.valueOf(1000), LocalDateTime.now());
+            when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(Mono.just(transaction));
+            // Act
+            transactionRepository.save(transaction).block();
+        });
+    }
 
-        StockEntity stock = stockRepository.findById(transaction.getStockId()).block();
-        Assertions.assertNotNull(stock);
-        Assertions.assertEquals("377300", stock.getCode());
+    @Test
+    @DisplayName("트랜잭션 save 실패(거래 가격 예외) 테스트")
+    void testSaveFailedTransactionWithZeroOrNegativePrice() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TransactionEntity transaction = new TransactionEntity(1L, 10, BigDecimal.ZERO, LocalDateTime.now());
 
-        Thread.sleep(500L);
+            when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(Mono.just(transaction));
+
+            transactionRepository.save(transaction).block();
+        });
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            TransactionEntity transaction = new TransactionEntity(1L, 10, BigDecimal.valueOf(-1000), LocalDateTime.now());
+
+            when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(Mono.just(transaction));
+
+            transactionRepository.save(transaction).block();
+        });
+    }
+
+    @Test
+    @DisplayName("트랜잭션 save 실패(현재 시간보다 미래에 대한 예외) 테스트")
+    void testSaveFailedTransactionWithFutureTransactionTime() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            TransactionEntity transaction = new TransactionEntity(1L, 10, BigDecimal.valueOf(1000), LocalDateTime.now().plusDays(1));
+            when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(Mono.just(transaction));
+
+            transactionRepository.save(transaction).block();
+        });
     }
 }
