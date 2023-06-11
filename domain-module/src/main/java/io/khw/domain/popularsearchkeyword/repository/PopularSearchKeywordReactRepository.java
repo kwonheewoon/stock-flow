@@ -1,4 +1,4 @@
-package io.khw.domain.popularsearchkeyword.repository_r2dbc;
+package io.khw.domain.popularsearchkeyword.repository;
 
 import io.khw.domain.popularsearchkeyword.entity.PopularSearchKeywordEntity;
 import org.springframework.data.r2dbc.repository.Modifying;

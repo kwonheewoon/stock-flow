@@ -1,6 +1,7 @@
-package io.khw.rankingmodule.config;
+package io.khw.rankingmodule.redis;
 
 
+import io.khw.rankingmodule.config.TestRedisConfiguration;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +14,6 @@ import redis.embedded.RedisServer;
 
 import java.io.IOException;
 
-//@ActiveProfiles("local")
 @SpringBootTest(classes = TestRedisConfiguration.class)
 public class EmbeddedRedisTest {
 
@@ -27,7 +27,7 @@ public class EmbeddedRedisTest {
         zSetOperations.add("stock", "삼성전자", 100);
         zSetOperations.add("stock", "삼성물산", 200);
 
-        var df = zSetOperations.rangeByScoreWithScores("stock", 0, 500);
+        var df = zSetOperations.reverseRangeByScoreWithScores("stock", 0, 500);
 
         System.out.println("데이터 : " + df);
     }

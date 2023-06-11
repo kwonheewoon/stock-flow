@@ -22,7 +22,7 @@ dependencies {
 
 
     implementation group: 'io.r2dbc', name: 'r2dbc-h2', version: '1.0.0.RELEASE'
-    implementation 'com.h2database:h2:2.1.214'
+    //implementation 'com.h2database:h2:2.1.214'
 
 
     annotationProcessor (

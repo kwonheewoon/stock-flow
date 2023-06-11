@@ -9,7 +9,7 @@ import redis.embedded.RedisServer;
 public class TestRedisConfiguration {
     private RedisServer redisServer;
 
-    public TestRedisConfiguration(RedisProperties redisProperties) {
+    public TestRedisConfiguration() {
         this.redisServer = new RedisServer(16379);
     }
 

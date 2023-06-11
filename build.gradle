@@ -50,9 +50,9 @@ project(':domain-module') {
         api project(':common-module')
     }
 
-    test {
-        exclude '**/*'
-    }
+//    test {
+//        exclude '**/*'
+//    }
 
 }
 
@@ -62,9 +62,9 @@ project(':trading-module') {
         implementation project(':domain-module')
     }
 
-    test {
-        exclude '**/*'
-    }
+//    test {
+//        exclude '**/*'
+//    }
 
 }
 
@@ -73,9 +73,9 @@ project(':ranking-module') {
         implementation project(':domain-module')
     }
 
-    test {
-        exclude '**/*'
-    }
+//    test {
+//        exclude '**/*'
+//    }
 
 }
 

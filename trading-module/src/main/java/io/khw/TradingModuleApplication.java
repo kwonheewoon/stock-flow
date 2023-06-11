@@ -8,14 +8,14 @@ import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import reactor.blockhound.BlockHound;
 
 @SpringBootApplication(scanBasePackages = {"io.khw.domain", "io.khw.common", "io.khw.search"})
-@EnableR2dbcRepositories(basePackages = {"io.khw.domain.*.repository_r2dbc"})
+@EnableR2dbcRepositories(basePackages = {"io.khw.domain.*.repository"})
 @EntityScan(basePackages = {"io.khw.domain"})
 @ConfigurationPropertiesScan(basePackages = "io.khw.common")
 public class TradingModuleApplication {
     public static void main(String[] args) {
-        BlockHound.builder()
-                .allowBlockingCallsInside("java.io.RandomAccessFile", "readBytes")
-                .install();
+//        BlockHound.builder()
+//                .allowBlockingCallsInside("java.io.RandomAccessFile", "readBytes")
+//                .install();
         SpringApplication.run(TradingModuleApplication.class, args);
     }
 

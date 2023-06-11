@@ -13,6 +13,8 @@ dependencies {
 
     implementation group: 'io.projectreactor.tools', name: 'blockhound', version: '1.0.8.RELEASE'
 
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-r2dbc:3.0.4'
+
 }
 
 task prepareKotlinBuildScriptModel {
