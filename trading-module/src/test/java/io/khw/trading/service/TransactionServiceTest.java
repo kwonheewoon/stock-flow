@@ -16,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -39,6 +40,7 @@ public class TransactionServiceTest {
     @Mock
     private TransactionConverter transactionConverter;
 
+
     @Test
     @DisplayName("트랜잭션 저장 및 주식 가격 업데이트 성공 테스트")
     public void testSaveTransactionAndUpdateStockPrice() {
@@ -53,20 +55,22 @@ public class TransactionServiceTest {
         when(transactionConverter.transactionSaveDtoToTransactionEntity(transactionSaveDto)).thenReturn(transactionEntity);
         when(transactionConverter.toTransactionApiDto(transactionEntity)).thenReturn(new TransactionApiDto(1L,42L, 10, BigDecimal.valueOf(1000), LocalDateTime.now()));
 
-        // Act
-        TransactionApiDto resultTransaction = transactionService.saveTransaction(transactionSaveDto).block();
+        // Act & Assert
+        StepVerifier.create(transactionService.saveTransaction(transactionSaveDto))
+                .assertNext(resultTransaction -> {
+                    assertNotNull(resultTransaction);
+                    assertEquals(transactionEntity.getStockId(), resultTransaction.getStockId());
+                    assertEquals(transactionEntity.getVolume(), resultTransaction.getVolume());
+                    assertEquals(transactionEntity.getPrice(), resultTransaction.getPrice());
 
-        // Assert
-        assertNotNull(resultTransaction);
-        assertEquals(transactionEntity.getStockId(), resultTransaction.getStockId());
-        assertEquals(transactionEntity.getVolume(), resultTransaction.getVolume());
-        assertEquals(transactionEntity.getPrice(), resultTransaction.getPrice());
-
-        // Verify that the stockRepository's save method was called with the updated price
-        ArgumentCaptor<StockEntity> captor = ArgumentCaptor.forClass(StockEntity.class);
-        verify(stockRepository).save(captor.capture());
-        assertEquals(transactionEntity.getPrice(), captor.getValue().getPrice());
+                    // Verify that the stockRepository's save method was called with the updated price
+                    ArgumentCaptor<StockEntity> captor = ArgumentCaptor.forClass(StockEntity.class);
+                    verify(stockRepository).save(captor.capture());
+                    assertEquals(transactionEntity.getPrice(), captor.getValue().getPrice());
+                })
+                .verifyComplete();
     }
+
 
     @Test
     @DisplayName("주식이 존재하지 않을 때 트랜잭션 저장 실패 테스트")
@@ -79,7 +83,10 @@ public class TransactionServiceTest {
         when(stockRepository.findById(any(Long.class))).thenReturn(Mono.empty());
 
         // Act & Assert
-        assertThrows(TradingException.class, () -> transactionService.saveTransaction(transactionSaveDto).block());
+        StepVerifier.create(transactionService.saveTransaction(transactionSaveDto))
+                .expectErrorMatches(throwable -> throwable instanceof TradingException)
+                .verify();
+
         verify(stockRepository).findById(any(Long.class));
         //stockRepository의 findById 외에 상호작용이 없음을 검증
         verifyNoMoreInteractions(stockRepository);
@@ -97,13 +104,17 @@ public class TransactionServiceTest {
 
         when(transactionConverter.transactionSaveDtoToTransactionEntity(transactionSaveDto)).thenReturn(transactionEntity);
         when(stockRepository.findById(any(Long.class))).thenReturn(Mono.just(stockEntity));
-        when(transactionRepository.save(any(TransactionEntity.class))).thenThrow(new RuntimeException());
+        when(transactionRepository.save(any(TransactionEntity.class))).thenReturn(Mono.error(new RuntimeException()));
 
         // Act & Assert
-        assertThrows(TradingException.class, () -> transactionService.saveTransaction(transactionSaveDto).block());
+        StepVerifier.create(transactionService.saveTransaction(transactionSaveDto))
+                .expectErrorMatches(throwable -> throwable instanceof TradingException)
+                .verify();
+
         verify(stockRepository).findById(any(Long.class));
         verify(transactionRepository).save(any(TransactionEntity.class));
     }
+
 
 
 }

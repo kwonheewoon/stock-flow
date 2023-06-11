@@ -14,7 +14,7 @@ dependencies {
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
     testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis:3.0.4'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive:3.0.4'
     implementation group: 'io.projectreactor.tools', name: 'blockhound', version: '1.0.8.RELEASE'
 
     testImplementation group: 'io.r2dbc', name: 'r2dbc-h2', version: '1.0.0.RELEASE'

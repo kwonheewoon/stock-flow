@@ -3,13 +3,15 @@ package io.khw.domain.transaction.converter;
 import io.khw.domain.transaction.dto.TransactionApiDto;
 import io.khw.domain.transaction.dto.TransactionSaveDto;
 import io.khw.domain.transaction.entity.TransactionEntity;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import javax.annotation.processing.Generated;
 import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2023-06-11T15:43:52+0900",
-    comments = "version: 1.5.3.Final, compiler: javac, environment: Java 17.0.4.1 (Eclipse Adoptium)"
+    date = "2023-06-11T18:32:51+0900",
+    comments = "version: 1.5.3.Final, compiler: javac, environment: Java 17.0.6 (Eclipse Adoptium)"
 )
 @Component
 public class TransactionConverterImpl implements TransactionConverter {
@@ -36,14 +38,20 @@ public class TransactionConverterImpl implements TransactionConverter {
             return null;
         }
 
-        TransactionApiDto.TransactionApiDtoBuilder transactionApiDto = TransactionApiDto.builder();
+        Long id = null;
+        Long stockId = null;
+        int volume = 0;
+        BigDecimal price = null;
+        LocalDateTime transactionTime = null;
 
-        transactionApiDto.id( entity.getId() );
-        transactionApiDto.stockId( entity.getStockId() );
-        transactionApiDto.volume( entity.getVolume() );
-        transactionApiDto.price( entity.getPrice() );
-        transactionApiDto.transactionTime( entity.getTransactionTime() );
+        id = entity.getId();
+        stockId = entity.getStockId();
+        volume = entity.getVolume();
+        price = entity.getPrice();
+        transactionTime = entity.getTransactionTime();
 
-        return transactionApiDto.build();
+        TransactionApiDto transactionApiDto = new TransactionApiDto( id, stockId, volume, price, transactionTime );
+
+        return transactionApiDto;
     }
 }
