@@ -2,6 +2,7 @@ package io.khw.domain.stock.converter;
 
 
 import io.khw.domain.stock.dto.StockApiDto;
+import io.khw.domain.stock.dto.StockPriceDeltaRankApiDto;
 import io.khw.domain.stock.entity.StockEntity;
 import io.khw.domain.transaction.dto.TransactionApiDto;
 import io.khw.domain.transaction.dto.TransactionSaveDto;
@@ -12,5 +13,7 @@ import org.mapstruct.Mapper;
 public interface StockConverter {
 
     StockApiDto toStockApiDto(StockEntity entity);
+
+    StockPriceDeltaRankApiDto toStockPriceDeltaRankApiDto(StockEntity entity);
 
 }

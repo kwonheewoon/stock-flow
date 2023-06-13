@@ -26,6 +26,24 @@ public class EmbeddedRedisTest {
     ReactiveRedisTemplate<String, String> reactiveRedisTemplate;
 
     @Test
+    public void rankingVolume() {
+        // Embedded Redis 사용 예시
+        ReactiveZSetOperations<String, String> zSetOperations = reactiveRedisTemplate.opsForZSet();
+
+        zSetOperations.add("stock:ranking:volume", "삼성전자", 6500)
+                .then(zSetOperations.add("stock:ranking:volume", "카카오", 7549))
+                .then(zSetOperations.add("stock:ranking:volume", "카카오페이", 2855))
+                .then(zSetOperations.add("stock:ranking:volume", "카카오뱅크", 1140))
+                .block(); // block()은 테스트 용도. 실제 코드에서는 사용하지 않는다.
+
+        Flux<ZSetOperations.TypedTuple<String>> df = zSetOperations.reverseRangeWithScores("stock:ranking:volume", Range.closed(0L, 500L));
+
+        df.doOnNext(tuple -> {
+            System.out.println("데이터: " + tuple.getValue() + ", 점수: " + tuple.getScore());
+        }).blockLast(); // blockLast()는 테스트 용도. 실제 코드에서는 사용하지 않는다.
+    }
+
+    @Test
     public void testEmbeddedRedis() {
         // Embedded Redis 사용 예시
         ReactiveZSetOperations<String, String> zSetOperations = reactiveRedisTemplate.opsForZSet();
