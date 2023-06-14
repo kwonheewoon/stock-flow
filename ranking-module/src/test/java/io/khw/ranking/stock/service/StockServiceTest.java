@@ -1,10 +1,10 @@
-package io.khw.rankingmodule.stock.service;
+package io.khw.ranking.stock.service;
 
 import io.khw.domain.stock.converter.StockConverter;
 import io.khw.domain.stock.dto.StockApiDto;
 import io.khw.domain.stock.entity.StockEntity;
 import io.khw.domain.stock.repository.StockRepository;
-import io.khw.rankingmodule.stock.StockService;
+import io.khw.ranking.stock.StockService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

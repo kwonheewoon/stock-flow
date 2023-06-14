@@ -1,4 +1,4 @@
-package io.khw.rankingmodule.config;
+package io.khw.ranking.config;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;

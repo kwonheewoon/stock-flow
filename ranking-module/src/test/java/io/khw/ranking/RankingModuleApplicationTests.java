@@ -1,4 +1,4 @@
-package io.khw.rankingmodule;
+package io.khw.ranking;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

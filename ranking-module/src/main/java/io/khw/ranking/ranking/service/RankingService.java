@@ -1,21 +1,17 @@
-package io.khw.rankingmodule.ranking.service;
+package io.khw.ranking.ranking.service;
 
 import io.khw.common.constants.ApiResponseCode;
+import io.khw.common.constants.Const;
 import io.khw.common.exeception.RankingException;
-import io.khw.common.response.CommonResponse;
-import io.khw.common.response.ErrCommonResponse;
+import io.khw.domain.common.vo.SearchVo;
 import io.khw.domain.stock.converter.StockConverter;
-import io.khw.domain.stock.dto.StockApiDto;
 import io.khw.domain.stock.dto.StockPriceDeltaRankApiDto;
-import io.khw.domain.stock.entity.StockEntity;
 import io.khw.domain.stock.repository.StockRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Range;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.core.ReactiveZSetOperations;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -40,18 +36,18 @@ public class RankingService {
 
         return stockRepository.findByIdAndCode(stockId, stockCode)
                 .switchIfEmpty(Mono.error(new RankingException(ApiResponseCode.STOCK_NOT_FOUND))) // 주식이 존재하지 않을 경우 예외 발생
-                .then(Mono.defer(() -> zSetOperations.incrementScore("stock:ranking:volume", stockId + ":" + stockCode, tradeVolume)))
+                .then(Mono.defer(() -> zSetOperations.incrementScore(Const.STOCK_RANKING_VOLUME_KEY, stockId + ":" + stockCode, tradeVolume)))
                 .doOnError(e -> {
                     log.error("Failed to increment volume rank for stock: " + stockCode, e);
                 })
                 .onErrorResume(e -> Mono.error(e));
     }
 
-    public Flux<StockPriceDeltaRankApiDto> findAllStocksInAscendingOrder(long page, long size) {
+    public Flux<StockPriceDeltaRankApiDto> findAllStocksVolumeRanking(SearchVo searchVo) {
         ReactiveZSetOperations<String, String> zSetOperations = reactiveRedisTemplate.opsForZSet();
 
         // get the range from sorted set in ascending order
-        return zSetOperations.reverseRangeWithScores("stock:ranking:volume", Range.closed(page, size))
+        return zSetOperations.reverseRangeWithScores(Const.STOCK_RANKING_VOLUME_KEY, Range.closed(searchVo.getStartIndex(), searchVo.getEndIndex()))
                 .flatMap(tuple -> {
                     String[] split = tuple.getValue().split(":");
                     Long stockId = Long.valueOf(split[0]);
@@ -75,18 +71,18 @@ public class RankingService {
 
         return stockRepository.findByIdAndCode(stockId, stockCode)
                 .switchIfEmpty(Mono.error(new RankingException(ApiResponseCode.STOCK_NOT_FOUND))) // 주식이 존재하지 않을 경우 예외 발생
-                .then(Mono.defer(() -> zSetOperations.incrementScore("stock:ranking:popularity", stockId + ":" + stockCode, 1)))
+                .then(Mono.defer(() -> zSetOperations.incrementScore(Const.STOCK_RANKING_POPULARITY_KEY, stockId + ":" + stockCode, 1)))
                 .doOnError(e -> {
                     log.error("Failed to increment popularity rank for stock: " + stockCode, e);
                 })
                 .onErrorResume(e -> Mono.error(e));
     }
 
-    public Flux<StockPriceDeltaRankApiDto> findAllStocksPopularityOrder(long page, long size) {
+    public Flux<StockPriceDeltaRankApiDto> findAllStocksPopularityRanking(SearchVo searchVo) {
         ReactiveZSetOperations<String, String> zSetOperations = reactiveRedisTemplate.opsForZSet();
 
         // get the range from sorted set in ascending order
-        return zSetOperations.reverseRangeWithScores("stock:ranking:popularity", Range.closed(page, size))
+        return zSetOperations.reverseRangeWithScores(Const.STOCK_RANKING_POPULARITY_KEY, Range.closed(searchVo.getStartIndex(), searchVo.getEndIndex()))
                 .flatMap(tuple -> {
                     String[] split = tuple.getValue().split(":");
                     Long stockId = Long.valueOf(split[0]);
@@ -113,8 +109,7 @@ public class RankingService {
                     BigDecimal currentPrice = stockEntity.getPrice();
                     BigDecimal changePercent = calculatePriceDelta(buyPrice, currentPrice);
 
-                    // Update the price change for the given stockId and stockCode
-                    return zSetOperations.add("stock:price:delta", stockId + ":" + stockCode, changePercent.doubleValue());
+                    return zSetOperations.add(Const.STOCK_PRICE_DELTA_KEY, stockId + ":" + stockCode, changePercent.doubleValue());
                 })
                 .doOnError(e -> {
                     log.error("Failed to update price change for stock: " + stockCode, e);
@@ -122,11 +117,11 @@ public class RankingService {
                 .onErrorResume(e -> Mono.error(e));
     }
 
-    public Flux<StockPriceDeltaRankApiDto> findAllStocksPriceDeltaOrder(long page, long size) {
+    public Flux<StockPriceDeltaRankApiDto> findAllStocksPriceDeltaRanking(SearchVo searchVo) {
         ReactiveZSetOperations<String, String> zSetOperations = reactiveRedisTemplate.opsForZSet();
 
         // get the range from sorted set in ascending order
-        return zSetOperations.reverseRangeWithScores("stock:price:delta", Range.closed(page, size))
+        return zSetOperations.reverseRangeWithScores(Const.STOCK_PRICE_DELTA_KEY, Range.closed(searchVo.getStartIndex(), searchVo.getEndIndex()))
                 .flatMap(tuple -> {
                     String[] split = tuple.getValue().split(":");
                     Long stockId = Long.valueOf(split[0]);
@@ -148,7 +143,7 @@ public class RankingService {
         ReactiveZSetOperations<String, String> zSetOperations = reactiveRedisTemplate.opsForZSet();
         String key = stockId + ":" + stockCode;
 
-        return zSetOperations.score("stock:price:delta", key);
+        return zSetOperations.score(Const.STOCK_PRICE_DELTA_KEY, key);
     }
 
 //    public Mono<StockPriceDeltaRankApiDto> findStockPriceDeltaByStockIdAndCode(Long stockId, String stockCode) {

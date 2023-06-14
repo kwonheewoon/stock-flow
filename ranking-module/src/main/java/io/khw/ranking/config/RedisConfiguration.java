@@ -1,4 +1,4 @@
-package io.khw.rankingmodule.config;
+package io.khw.ranking.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

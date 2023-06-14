@@ -1,9 +1,10 @@
-package io.khw.rankingmodule.ranking.service;
+package io.khw.ranking.ranking.service;
 
 import io.khw.common.constants.ApiResponseCode;
+import io.khw.common.constants.Const;
 import io.khw.common.exeception.RankingException;
+import io.khw.domain.common.vo.SearchVo;
 import io.khw.domain.stock.converter.StockConverter;
-import io.khw.domain.stock.dto.StockApiDto;
 import io.khw.domain.stock.dto.StockPriceDeltaRankApiDto;
 import io.khw.domain.stock.entity.StockEntity;
 import io.khw.domain.stock.repository.StockRepository;
@@ -25,7 +26,6 @@ import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyDouble;
@@ -142,7 +142,7 @@ public class RankingServiceTest {
         when(rankingService.findStockPriceDeltaByStockIdAndCode(stockId, stockCode)).thenReturn(Mono.just(priceDelta));
 
         // execute
-        StepVerifier.create(rankingService.findAllStocksInAscendingOrder(0, 1))
+        StepVerifier.create(rankingService.findAllStocksVolumeRanking(new SearchVo(1,10)))
                 .expectNext(stockPriceDeltaRankApiDto)
                 .verifyComplete();
     }
@@ -157,7 +157,7 @@ public class RankingServiceTest {
         when(zSetOperations.reverseRangeWithScores(anyString(), any())).thenReturn(Flux.empty());
 
         // execute
-        StepVerifier.create(rankingService.findAllStocksInAscendingOrder(0, 1))
+        StepVerifier.create(rankingService.findAllStocksVolumeRanking(new SearchVo(1,10)))
                 .expectComplete();  // 결과가 없어도 에러가 아닌 complete를 반환
     }
 
@@ -175,7 +175,7 @@ public class RankingServiceTest {
         when(stockRepository.findByIdAndCode(Long.valueOf(stockId), stockCode)).thenReturn(Mono.empty());
 
         // execute
-        StepVerifier.create(rankingService.findAllStocksInAscendingOrder(0, 1))
+        StepVerifier.create(rankingService.findAllStocksVolumeRanking(new SearchVo(1,10)))
                 .expectError(RankingException.class)
                 .verify();
     }
@@ -262,7 +262,7 @@ public class RankingServiceTest {
         when(rankingService.findStockPriceDeltaByStockIdAndCode(stockId, stockCode)).thenReturn(Mono.just(priceDelta));
 
         // when
-        Flux<StockPriceDeltaRankApiDto> actual = rankingService.findAllStocksPopularityOrder(0L, 10L);
+        Flux<StockPriceDeltaRankApiDto> actual = rankingService.findAllStocksPopularityRanking(new SearchVo(1,10));
 
         // then
         StepVerifier.create(actual)
@@ -277,7 +277,7 @@ public class RankingServiceTest {
         when(zSetOperations.reverseRangeWithScores(anyString(), any(Range.class))).thenReturn(Flux.empty());
 
         // when
-        Flux<StockPriceDeltaRankApiDto> actual = rankingService.findAllStocksPopularityOrder(0L, 10L);
+        Flux<StockPriceDeltaRankApiDto> actual = rankingService.findAllStocksPopularityRanking(new SearchVo(1,10));
 
         // then
         StepVerifier.create(actual)
@@ -292,7 +292,7 @@ public class RankingServiceTest {
                 .thenReturn(Flux.error(new RuntimeException("Unexpected error")));
 
         // when
-        Flux<StockPriceDeltaRankApiDto> actual = rankingService.findAllStocksPopularityOrder(0L, 10L);
+        Flux<StockPriceDeltaRankApiDto> actual = rankingService.findAllStocksPopularityRanking(new SearchVo(1,10));
 
         // then
         StepVerifier.create(actual)
@@ -321,7 +321,7 @@ public class RankingServiceTest {
                 .verifyComplete();
 
         verify(stockRepository).findByIdAndCode(stockId, stockCode);
-        verify(zSetOperations).add("stock:price:delta", stockId + ":" + stockCode, 10.00);
+        verify(zSetOperations).add(Const.STOCK_PRICE_DELTA_KEY, stockId + ":" + stockCode, 10.00);
     }
 
     @Test
@@ -346,7 +346,7 @@ public class RankingServiceTest {
                 .verifyComplete();
 
         verify(stockRepository).findByIdAndCode(stockId, stockCode);
-        verify(zSetOperations).add("stock:price:delta", stockId + ":" + stockCode, -10.00);
+        verify(zSetOperations).add(Const.STOCK_PRICE_DELTA_KEY, stockId + ":" + stockCode, -10.00);
     }
 
     @Test
@@ -406,7 +406,7 @@ public class RankingServiceTest {
         when(stockConverter.toStockPriceDeltaRankApiDto(any(StockEntity.class))).thenReturn(expectedDto);
 
         // when
-        Flux<StockPriceDeltaRankApiDto> actual = rankingService.findAllStocksPriceDeltaOrder(0L, 10L);
+        Flux<StockPriceDeltaRankApiDto> actual = rankingService.findAllStocksPriceDeltaRanking(new SearchVo(1,10));
 
         // then
         StepVerifier.create(actual)
@@ -426,7 +426,7 @@ public class RankingServiceTest {
         when(stockRepository.findByIdAndCode(stockId, stockCode)).thenReturn(Mono.empty());
 
         // when
-        Flux<StockPriceDeltaRankApiDto> actual = rankingService.findAllStocksPriceDeltaOrder(0L, 10L);
+        Flux<StockPriceDeltaRankApiDto> actual = rankingService.findAllStocksPriceDeltaRanking(new SearchVo(1,10));
 
         // then
         StepVerifier.create(actual)

@@ -1,4 +1,4 @@
-package io.khw.rankingmodule.stock;
+package io.khw.ranking.stock;
 
 import io.khw.domain.stock.converter.StockConverter;
 import io.khw.domain.stock.dto.StockApiDto;
