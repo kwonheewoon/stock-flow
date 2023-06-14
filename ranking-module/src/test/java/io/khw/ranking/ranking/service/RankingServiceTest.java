@@ -3,6 +3,7 @@ package io.khw.ranking.ranking.service;
 import io.khw.common.constants.ApiResponseCode;
 import io.khw.common.constants.Const;
 import io.khw.common.exeception.RankingException;
+import io.khw.common.util.FormatUtil;
 import io.khw.domain.common.vo.SearchVo;
 import io.khw.domain.stock.converter.StockConverter;
 import io.khw.domain.stock.dto.StockPriceDeltaRankApiDto;
@@ -127,10 +128,10 @@ public class RankingServiceTest {
         // setup
         Long stockId = 42L;
         String stockCode = "377300";
-        Double priceDelta = 6.00;
+        double priceDelta = 6.00;
         String combinedIdAndCode = stockId + ":" + stockCode;
         StockEntity findStockEntity = StockEntity.builder().id(42L).code("377300").name("카카오페이").price(new BigDecimal("68400")).build();
-        StockPriceDeltaRankApiDto stockPriceDeltaRankApiDto = new StockPriceDeltaRankApiDto(findStockEntity.getId(), findStockEntity.getCode(), findStockEntity.getName(), findStockEntity.getPrice(), priceDelta, findStockEntity.getCreatedAt(), findStockEntity.getUpdatedAt());
+        StockPriceDeltaRankApiDto stockPriceDeltaRankApiDto = new StockPriceDeltaRankApiDto(findStockEntity.getId(), findStockEntity.getCode(), findStockEntity.getName(), FormatUtil.formatPriceToKoreanWon(findStockEntity.getPrice()), priceDelta, findStockEntity.getCreatedAt(), findStockEntity.getUpdatedAt());
 
 
         ReactiveZSetOperations<String, String> zSetOperations = mock(ReactiveZSetOperations.class);
@@ -251,9 +252,9 @@ public class RankingServiceTest {
         // given
         Long stockId = 42L;
         String stockCode = "377300";
-        Double priceDelta = 6.00;
+        double priceDelta = 6.00;
         StockEntity findStockEntity = StockEntity.builder().id(42L).code("377300").name("카카오페이").price(new BigDecimal("68400")).build();
-        StockPriceDeltaRankApiDto expectedDto = new StockPriceDeltaRankApiDto(findStockEntity.getId(), findStockEntity.getCode(), findStockEntity.getName(), findStockEntity.getPrice(), priceDelta, findStockEntity.getCreatedAt(), findStockEntity.getUpdatedAt());
+        StockPriceDeltaRankApiDto expectedDto = new StockPriceDeltaRankApiDto(findStockEntity.getId(), findStockEntity.getCode(), findStockEntity.getName(), FormatUtil.formatPriceToKoreanWon(findStockEntity.getPrice()), priceDelta, findStockEntity.getCreatedAt(), findStockEntity.getUpdatedAt());
 
         when(zSetOperations.reverseRangeWithScores(anyString(), any(Range.class)))
                 .thenReturn(Flux.just(ZSetOperations.TypedTuple.of(findStockEntity.getId() + ":" + findStockEntity.getCode(), 100.0)));
@@ -398,7 +399,7 @@ public class RankingServiceTest {
         Long stockId = 42L;
         String stockCode = "377300";
         StockEntity findStockEntity = StockEntity.builder().id(42L).code("377300").name("카카오페이").price(new BigDecimal("68400")).build();
-        StockPriceDeltaRankApiDto expectedDto = new StockPriceDeltaRankApiDto(findStockEntity.getId(), findStockEntity.getCode(), findStockEntity.getName(), findStockEntity.getPrice(), 6.00, findStockEntity.getCreatedAt(), findStockEntity.getUpdatedAt());
+        StockPriceDeltaRankApiDto expectedDto = new StockPriceDeltaRankApiDto(findStockEntity.getId(), findStockEntity.getCode(), findStockEntity.getName(), FormatUtil.formatPriceToKoreanWon(findStockEntity.getPrice()), 6.00, findStockEntity.getCreatedAt(), findStockEntity.getUpdatedAt());
 
         when(zSetOperations.reverseRangeWithScores(anyString(), any(Range.class)))
                 .thenReturn(Flux.just(ZSetOperations.TypedTuple.of(findStockEntity.getId() + ":" + findStockEntity.getCode(), 100.0)));
@@ -457,6 +458,11 @@ public class RankingServiceTest {
         assertEquals(expectedNoChange, calculatePriceDelta(newPrice, currentPrice));
     }
 
+    @Test
+    public void 짱짱(){
+        System.out.println(calculatePriceDelta(BigDecimal.valueOf(6650), BigDecimal.valueOf(65000)));
+    }
+
     @DisplayName("주가 변동폭 계산 메소드")
     private BigDecimal calculatePriceDelta(BigDecimal buyPrice, BigDecimal currentPrice) {
 
@@ -467,8 +473,10 @@ public class RankingServiceTest {
             throw new RankingException(ApiResponseCode.CALCULATE_PRICE_ERROR);
         }
 
-        return buyPrice.subtract(currentPrice)
-                .divide(currentPrice, 2, RoundingMode.HALF_UP)
+        BigDecimal result = buyPrice.subtract(currentPrice)
+                .divide(currentPrice, 10, RoundingMode.HALF_DOWN)
                 .multiply(BigDecimal.valueOf(100));
+        result = result.setScale(2, RoundingMode.HALF_DOWN);
+        return result;
     }
 }

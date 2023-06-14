@@ -173,9 +173,11 @@ public class RankingService {
             throw new RankingException(ApiResponseCode.CALCULATE_PRICE_ERROR);
         }
 
-        return buyPrice.subtract(currentPrice)
-                .divide(currentPrice, 2, RoundingMode.HALF_UP)
+        BigDecimal result = buyPrice.subtract(currentPrice)
+                .divide(currentPrice, 10, RoundingMode.HALF_DOWN)
                 .multiply(BigDecimal.valueOf(100));
+        result = result.setScale(2, RoundingMode.HALF_DOWN);
+        return result;
     }
 
 

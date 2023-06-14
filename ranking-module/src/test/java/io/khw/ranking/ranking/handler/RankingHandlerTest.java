@@ -2,6 +2,7 @@ package io.khw.ranking.ranking.handler;
 
 import io.khw.common.constants.ApiResponseCode;
 import io.khw.common.exeception.RankingException;
+import io.khw.common.util.FormatUtil;
 import io.khw.domain.common.vo.SearchVo;
 import io.khw.domain.stock.dto.StockIncPopularityDto;
 import io.khw.domain.stock.dto.StockIncVolumeDto;
@@ -62,7 +63,7 @@ public class RankingHandlerTest {
                 .price(new BigDecimal("1000"))
                 .build();
 
-        StockPriceDeltaRankApiDto dto = new StockPriceDeltaRankApiDto(stockEntity.getId(), stockEntity.getCode(), stockEntity.getName(), stockEntity.getPrice(), 6.00, stockEntity.getCreatedAt(), stockEntity.getUpdatedAt());
+        StockPriceDeltaRankApiDto dto = new StockPriceDeltaRankApiDto(stockEntity.getId(), stockEntity.getCode(), stockEntity.getName(), FormatUtil.formatPriceToKoreanWon(stockEntity.getPrice()), 6.00, stockEntity.getCreatedAt(), stockEntity.getUpdatedAt());
 
         when(rankingService.findAllStocksVolumeRanking(any(SearchVo.class))).thenReturn(Flux.just(dto));
 
@@ -140,7 +141,7 @@ public class RankingHandlerTest {
                 .price(new BigDecimal("1000"))
                 .build();
 
-        StockPriceDeltaRankApiDto dto = new StockPriceDeltaRankApiDto(stockEntity.getId(), stockEntity.getCode(), stockEntity.getName(), stockEntity.getPrice(), 6.00, stockEntity.getCreatedAt(), stockEntity.getUpdatedAt());
+        StockPriceDeltaRankApiDto dto = new StockPriceDeltaRankApiDto(stockEntity.getId(), stockEntity.getCode(), stockEntity.getName(), FormatUtil.formatPriceToKoreanWon(stockEntity.getPrice()), 6.00, stockEntity.getCreatedAt(), stockEntity.getUpdatedAt());
 
         when(rankingService.findAllStocksPopularityRanking(any(SearchVo.class))).thenReturn(Flux.just(dto));
 
@@ -195,7 +196,7 @@ public class RankingHandlerTest {
                 .price(new BigDecimal("1000"))
                 .build();
 
-        StockPriceDeltaRankApiDto dto = new StockPriceDeltaRankApiDto(stockEntity.getId(), stockEntity.getCode(), stockEntity.getName(), stockEntity.getPrice(), 6.00, stockEntity.getCreatedAt(), stockEntity.getUpdatedAt());
+        StockPriceDeltaRankApiDto dto = new StockPriceDeltaRankApiDto(stockEntity.getId(), stockEntity.getCode(), stockEntity.getName(), FormatUtil.formatPriceToKoreanWon(stockEntity.getPrice()), 6.00, stockEntity.getCreatedAt(), stockEntity.getUpdatedAt());
 
         when(rankingService.findAllStocksPriceDeltaRanking(any(SearchVo.class))).thenReturn(Flux.just(dto));
 
