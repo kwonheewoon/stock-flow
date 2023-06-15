@@ -7,7 +7,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 import reactor.blockhound.BlockHound;
 
-@SpringBootApplication(scanBasePackages = {"io.khw.domain", "io.khw.common", "io.khw.search"})
+@SpringBootApplication(scanBasePackages = {"io.khw.domain", "io.khw.common", "io.khw.trading"})
 @EnableR2dbcRepositories(basePackages = {"io.khw.domain.*.repository"})
 @EntityScan(basePackages = {"io.khw.domain"})
 @ConfigurationPropertiesScan(basePackages = "io.khw.common")

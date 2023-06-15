@@ -1,28 +1,60 @@
-# 블로그(카카오, 네이버) 검색 서비스 : 권희운
+# 주식 실시간 순위 정보 서비스 과제 : 권희운
 
-### WebFlux 기반 카카오, 네이버 블로그 검색 API
+## 프로젝트 구성
 ```c
- 1. BlockHound를 사용하여 동기적 호출이 발생되지 않게 개발
- 2. application-common.yml api.blog.main 의 값에 따른 KakaoBlogSearchService, 
-    NaverBlogSearchService 구현체 의존성 전략 주입
- 3. main API의 서버 오류등 호출이 불가 할 겨우 지정된 횟수만큼 재시도
- 4. 재시도 실패시 대체 API(네이버 블로그 검색 API) 재호출
- 5. 호출 성공시 query=검색어 의 검색횟수 증가 메소드 호출
+ 1.Gradle 기반 멀티모듈 구성
+    ㄴcommon(공통코드 모듈), domain(도메인 객체, 레파지토리 포함 모듈), 
+    ㄴranking(주식 실시간 순위 정보 서비스 비지니스 로직 모듈), trading(주식 거래 관련 비지니스 로직을 구현할 목적이었지만 시간관계상 개발하지 못하여 사용되지 않습니다)
+ 2.Spring Boot 기반 WebFlux 사용
+ 3.BlockHoud 라이브러리(블로킹 메소드 검출 도구)를 사용하여 논블로킹 검증
+ 4.계층 구조
+    ㄴRouter
+        ㄴHandler
+            ㄴService
+ 5.계층별 단위테스트
+    ㄴio.khw.ranking.rnaking.handler
+    ㄴio.khw.ranking.rnaking.service
+```
+
+## 비지니스 로직 설계
+```c
+ 1.어플리케이션 구동시 주식 기초정보(SampleData로 제공된) 데이터는 RDB(stock 테이블), redis에 적재
+ 2.주식 기초정보(SampleData로 제공된)는 RDB(stock 테이블)에 저장
+    ㄴ현재는 주식 아이디, 코드값으로 주식정보만 조회하는 테이블 이지만
+    ㄴ거래시장 마감시간마다 현재 주가 정보를 업데이트 하는 용도 목적도 추가가 필요함(전날의 변화된 주가 정보는 영구적 저장이 필요하기 때문)
+ 3.실시간 순위정보, 실시간 주식 가격은 Redis에 적재 수정이 매우 빈번한 데이터 저장소에 적합하다 생각
+    ㄴzset을 이용하여 실시간 순위 또한 정렬에 용이
+    ㄴhash 단일 조회에 최적화된 데이터 구조
+    ㄴhash를 사용하여 실시간 주식정보 저장 (현재가격{실시간으로 변동되는 가격}, 주식 명칭, 주가 상승,하락폭)
+        ㄴex) 42:377300   {"currentPrice":"60000","name":"카카오페이","percent":"12.28"}
+    ㄴ다만 영구적인 저장소가 아닌점, 거래시장 마감시간마다 새로운 key 구조(날짜 포함등)으로 변경하고, 당일 장의 데이터는 RDB로 이동 적재
+     하는 방식을 생각해 볼 수 있다
+ 4.주식거래 API 
+    ㄴ구매 수량, 상승,하락폭 업데이트
+    ㄴhash에 저장된 주식정보 업데이트
+ 5.주식정보 상세조회 API
+    ㄴ상세 조회시 주식 인기도 증가
+ 6.주식 인기도,거래량,상승,하락 API 
+    ㄴRedis의 zset 데이터 구조에 각각 저장
+ 7.테스트 API(주식 거래량 증가, 주식 인기도 증가) 제공
+    ㄴ해당 API만 호출하여 실시간 순위 변화 테스트 가능
+ 
 ```
 
 ## 사용 외부 라이브러리
+embedded-redis : 인메모리 h2디비와 같은 인메모리 내장 redis 서버 \
 lombok : Java의 라이브러리로 반복되는 메소드를 Annotation을 사용해서 자동으로 작성해주는 라이브러리 \
 mapstruct : Java bean 유형 간의 매핑 구현을 단순화하는 코드 생성기 
 BlockHound : 비동기 프로그램을 구현하기 위해 블로킹 메소드를 검출을 도와주는 라이브러리
 
 ## jar 파일 위치
-/search-module.jar
+/ranking-module.jar
 
 ## 서버 구동 방법
-java -jar /search-module.jar --spring.profiles.active=dev
+java -jar /ranking-module --spring.profiles.active=local
 
 ## 빌드 방법
-WORK_DIR :  search-module
+WORK_DIR :  stock-flow
 
 jar 파일 빌드 \
 ./gradlew build
@@ -30,55 +62,171 @@ jar 파일 빌드 \
 
 ## 빌드 후 서버 구동 방법
 빌드된 jar 파일 실행 \
-java -jar ./build/libs/search-module-0.0.1-SNAPSHOT.jar --spring.profiles.active=dev
-
-## 모듈 구조(Gradle 기반 멀티모듈 환경)
-```c 
-ㄴsearch-module : 비지니스 로직 포함 모듈
-ㄴㄴdomain-module : Entity, Dto, Vo, Reposotiry 포함 모듈
-ㄴㄴㄴcommon-module : 공통으로 사용 가능한 Config, Enum, Exception, ControllerAdvice 혹은 Util성 객체 포함 모듈
-```
+java -jar ./ranking-module/build/libs/ranking-module-0.0.1-SNAPSHOT.jar --spring.profiles.active=local
 
 ## API 명세서
-### Swagger Ui : http://localhost:8080/swagger-ui/
+### Swagger Ui : http://localhost:8080/swagger-ui/webjars/swagger-ui/index.html
 
 
-GET : localhost:8080/search/blog?query=검색어&sort=recency&page=1&size=10
+### 주식 거래(구매 수량, 상승,하락폭 업데이트)
+POST : localhost:8080/stocks/rankings/{stockId}/{stockCode}
 ```c
+request : {
+    "tradeVolume" : 14,
+    "buyPrice" : 60000
+}
+
 response : {
-    "documents": [
-        {
-            "title": "충격!ChatGPT가 밝히는 구글 SEO전략의 실체!",
-            "thumbnail": "",
-            "blogName": "알쓸잡",
-            "contents": "도와주는 방법입니다. 이를 위해서는 다음과 같은 전략을 사용할 수 있습니다. 1.키워드 연구: 사용자가 검색할 때 입력하는 단어나 구를 찾고, 그에 대한 <b>검색어</b>를 선정하여 적극적으로 활용합니다. 2.내부 링크 구축: 웹사이트 내의 페이지들 간에 링크를 구성하여 검색 엔진이 쉽게 페이지를 찾을 수 있도록 돕습니다...",
-            "url": "http://wjdals10.tistory.com/2",
-            "datetime": "2023-03-22T19:02:23"
-        }
-    ],
-    "totalCount": 1219700
+    "message": "주식 거래 완료",
+    "code": "STOCK_TRADE_OK"
 }
 ```
 
-### 인기검색어 상위 10개 조회 API
-GET : localhost:8080/search/blog/top-keywords
+### 실시간 주식 정보 상세조회(상세 조회시 주식 인기도 증가)
+GET : localhost:8080/stocks/{stockId}/{stockCode}
 ```c
 response : {
-    "documents": [
+    "message": "종목 거래량 순위 조회 성공",
+    "result": {
+        "id": 42,
+        "code": "377300",
+        "name": "카카오페이",
+        "price": "60,000원",
+        "priceDeltaPercentage": -12.28
+    },
+    "code": "FIND_ALL_VOLUME_RANK_OK"
+}
+```
+
+### 주식 거래량 순위
+GET : localhost:8080/stocks/rankings/volume?page=1&size=10
+```c
+response : {
+    "message": "종목 거래량 순위 조회 성공",
+    "result": [
         {
-            "keyword": "인천",
-            "searchVolume": 11
+            "id": 9,
+            "code": "5380",
+            "name": "현대차",
+            "price": "186,000원",
+            "priceDeltaPercentage": 0.0
         },
         {
-            "keyword": "경기도",
-            "searchVolume": 7
-        },
-        {
-            "keyword": "판교",
-            "searchVolume": 5
+            "id": 99,
+            "code": "16360",
+            "name": "삼성증권",
+            "price": "35,100원",
+            "priceDeltaPercentage": 0.0
         }
     ],
-    "totalCount": 3
-} 
+    "code": "FIND_ALL_VOLUME_RANK_OK"
+}
+```
+
+### 주식 인기 순위
+GET : localhost:8080/stocks/rankings/volume?page=1&size=10
+```c
+response : {
+    "message": "종목 인기 순위 조회 성공",
+    "result": [
+        {
+            "id": 9,
+            "code": "5380",
+            "name": "현대차",
+            "price": "186,000원",
+            "priceDeltaPercentage": 0.0
+        },
+        {
+            "id": 99,
+            "code": "16360",
+            "name": "삼성증권",
+            "price": "35,100원",
+            "priceDeltaPercentage": 0.0
+        }
+    ],
+    "code": "FIND_ALL_POPULARITY_RANK_OK"
+}
+```
+
+### 주식 가격 상승 순위
+GET : localhost:8080/stocks/rankings/price-delta?page=1&size=10&orderType=INC
+```c
+response : {
+    "message": "종목 상승,하락가 순위 조회 성공",
+    "result": [
+        {
+            "id": 5,
+            "code": "5935",
+            "name": "삼성전자우",
+            "price": "60,000원",
+            "priceDeltaPercentage": 6.38
+        },
+        {
+            "id": 9,
+            "code": "5380",
+            "name": "현대차",
+            "price": "186,000원",
+            "priceDeltaPercentage": 0.0
+        }
+    ],
+    "code": "FIND_ALL_PRICE_DELTA_RANK_OK"
+}
+```
+
+### 주식 가격 상승 순위
+GET : localhost:8080/stocks/rankings/price-delta?page=1&size=10&orderType=DEC
+```c
+response : {
+    "message": "종목 상승,하락가 순위 조회 성공",
+    "result": [
+        {
+            "id": 42,
+            "code": "377300",
+            "name": "카카오페이",
+            "price": "60,000원",
+            "priceDeltaPercentage": -12.28
+        },
+        {
+            "id": 11,
+            "code": "270",
+            "name": "기아",
+            "price": "75,700원",
+            "priceDeltaPercentage": -1.3
+        }
+    ],
+    "code": "FIND_ALL_PRICE_DELTA_RANK_OK"
+}
+```
+
+### 주식 거래량 증가
+GET : localhost:8080/stocks/rankings/volume/increase
+```c
+request : {
+    "stockId" : 42,
+    "stockCode" : "377300",
+    "tradeVolume" : 555
+}
+
+response : {
+    "message": "종목 거래량 증가 성공",
+    "result": 569.0,
+    "code": "INCREASE_VOLUME_RANK_OK"
+}
+```
+
+### 주식 인기 증가
+GET : localhost:8080/stocks/rankings/popularity/increase
+```c
+request : {
+    "stockId" : 42,
+    "stockCode" : "377300",
+    "tradeVolume" : 555
+}
+
+response : {
+    "message": "종목 인기 증가 성공",
+    "result": 4.0,
+    "code": "INCREASE_POPULARITY_RANK_OK"
+}
 ```
 

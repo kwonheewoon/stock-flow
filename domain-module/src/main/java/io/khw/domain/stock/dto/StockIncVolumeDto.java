@@ -15,5 +15,5 @@ public class StockIncVolumeDto {
 
     private String stockCode;
 
-    private double tradeVolume;
+    private int tradeVolume;
 }

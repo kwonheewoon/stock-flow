@@ -1,10 +1,12 @@
 package io.khw.ranking.ranking.handler;
 
 import io.khw.common.constants.ApiResponseCode;
+import io.khw.common.enums.StockOrderEnum;
 import io.khw.common.response.CommonResponse;
 import io.khw.domain.common.vo.SearchVo;
 import io.khw.domain.stock.dto.StockIncPopularityDto;
 import io.khw.domain.stock.dto.StockIncVolumeDto;
+import io.khw.domain.stock.dto.StockPriceVolumeDto;
 import io.khw.domain.stock.dto.StockUpdatePriceDeltaDto;
 import io.khw.ranking.ranking.service.RankingService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,33 @@ import reactor.core.publisher.Mono;
 public class RankingHandler {
 
     private final RankingService rankingService;
+
+    public Mono<ServerResponse> findStockPriceDetailAndUpdatePopularity(ServerRequest serverRequest){
+
+        Long stockId = Long.valueOf(serverRequest.pathVariable("stockId"));
+        String stockCode = serverRequest.pathVariable("stockCode");
+
+
+
+        return ServerResponse.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(rankingService.findStockPriceDetailAndUpdatePopularity(stockId, stockCode)
+                        .map(list -> new CommonResponse<>(ApiResponseCode.FIND_ALL_VOLUME_RANK_OK,list)), CommonResponse.class);
+
+    }
+
+    public Mono<ServerResponse> updateStockPriceAndVolumeRank(ServerRequest request) {
+        Long stockId = Long.valueOf(request.pathVariable("stockId"));
+        String stockCode = request.pathVariable("stockCode");
+
+        return ServerResponse.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request.bodyToMono(StockPriceVolumeDto.class)
+                        .flatMap(requestBody -> rankingService.updateStockPriceAndVolumeRank(stockId, stockCode,
+                                requestBody.getBuyPrice(), requestBody.getTradeVolume()))
+                        .map(result -> new CommonResponse<>(ApiResponseCode.STOCK_TRADE_OK)), CommonResponse.class);
+
+    }
 
     public Mono<ServerResponse> findAllStocksVolumeRanking(ServerRequest serverRequest){
 
@@ -72,10 +101,11 @@ public class RankingHandler {
 
         int page = Integer.parseInt(serverRequest.queryParam("page").orElse("1"));
         int size = Integer.parseInt(serverRequest.queryParam("size").orElse("10"));
+        String orderType = serverRequest.queryParam("orderType").orElse(StockOrderEnum.INC.name());
 
         return ServerResponse.ok()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(rankingService.findAllStocksPriceDeltaRanking(new SearchVo(page, size)).collectList()
+                .body(rankingService.findAllStocksPriceDeltaRanking(new SearchVo(page, size), orderType).collectList()
                         .map(list -> new CommonResponse<>(ApiResponseCode.FIND_ALL_PRICE_DELTA_RANK_OK, list)), CommonResponse.class);
 
     }
@@ -85,7 +115,7 @@ public class RankingHandler {
         return serverRequest.bodyToMono(StockUpdatePriceDeltaDto.class)
                 .flatMap(stockUpdatePriceDeltaDto -> ServerResponse.ok()
                         .contentType(MediaType.APPLICATION_JSON)
-                        .body(rankingService.updatePriceDelta(stockUpdatePriceDeltaDto.getStockId(), stockUpdatePriceDeltaDto.getStockCode(), stockUpdatePriceDeltaDto.getBuyPrice())
+                        .body(rankingService.updatePriceDelta(stockUpdatePriceDeltaDto.getStockId(), stockUpdatePriceDeltaDto.getStockCode(), stockUpdatePriceDeltaDto.getBuyPrice(), stockUpdatePriceDeltaDto.getBuyPrice())
                                 .map(priceDelta -> new CommonResponse<>(ApiResponseCode.UPDATE_PRICE_DELTA_RANK_OK,priceDelta)), CommonResponse.class));
 
     }

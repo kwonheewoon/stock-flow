@@ -14,9 +14,9 @@ import reactor.blockhound.BlockHound;
 public class RankingModuleApplication {
 
     public static void main(String[] args) {
-//                BlockHound.builder()
-//                .allowBlockingCallsInside("java.io.RandomAccessFile", "readBytes")
-//                .install();
+                BlockHound.builder()
+                .allowBlockingCallsInside("java.io.RandomAccessFile", "readBytes")
+                .install();
         SpringApplication.run(RankingModuleApplication.class, args);
     }
 

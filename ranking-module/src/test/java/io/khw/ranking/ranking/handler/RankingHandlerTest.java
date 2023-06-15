@@ -4,13 +4,11 @@ import io.khw.common.constants.ApiResponseCode;
 import io.khw.common.exeception.RankingException;
 import io.khw.common.util.FormatUtil;
 import io.khw.domain.common.vo.SearchVo;
-import io.khw.domain.stock.dto.StockIncPopularityDto;
-import io.khw.domain.stock.dto.StockIncVolumeDto;
-import io.khw.domain.stock.dto.StockPriceDeltaRankApiDto;
-import io.khw.domain.stock.dto.StockUpdatePriceDeltaDto;
+import io.khw.domain.stock.dto.*;
 import io.khw.domain.stock.entity.StockEntity;
 import io.khw.ranking.ranking.service.RankingService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -23,7 +21,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -41,18 +38,55 @@ public class RankingHandlerTest {
     void setUp() {
         RankingHandler rankingHandler = new RankingHandler(rankingService);
         RouterFunction<ServerResponse> routerFunction = RouterFunctions.route()
+                .PUT("/stocks/rankings/price-delta", rankingHandler::updatePriceDelta)
+                .PUT("/stocks/rankings/volume/increase", rankingHandler::increaseVolumeRank)
+                .PUT("/stocks/rankings/popularity/increase", rankingHandler::increasePopularityRank)
                 .GET("/stocks/rankings/volume", rankingHandler::findAllStocksVolumeRanking)
-                .POST("/stocks/rankings/volume/increase", rankingHandler::increaseVolumeRank)
                 .GET("/stocks/rankings/popularity", rankingHandler::findAllStocksPopularityRanking)
-                .POST("/stocks/rankings/popularity/increase", rankingHandler::increasePopularityRank)
                 .GET("/stocks/rankings/price-delta", rankingHandler::findAllStocksPriceDeltaRanking)
-                .POST("/stocks/rankings/price-delta", rankingHandler::updatePriceDelta)
+                .POST("/stocks/rankings/{stockId}/{stockCode}", rankingHandler::updateStockPriceAndVolumeRank)
+                .GET("/stocks/{stockId}/{stockCode}", rankingHandler::findStockPriceDetailAndUpdatePopularity)
                 .build();
 
         webTestClient = WebTestClient.bindToRouterFunction(routerFunction).build();
     }
 
     @Test
+    @DisplayName("주식 정보 상세조회(조회시 인기순위 증가)")
+    void findStockPriceDetailAndUpdatePopularitySuccess() {
+        // Given
+        Long stockId = 42L;
+        String stockCode = "377300";
+        StockEntity stockEntity = StockEntity.builder()
+                .id(42L)
+                .code("377300")
+                .name("카카오페이")
+                .price(new BigDecimal("1000"))
+                .build();
+
+        StockPriceDeltaRankApiDto dto = new StockPriceDeltaRankApiDto(stockEntity.getId(), stockEntity.getCode(), stockEntity.getName(), FormatUtil.formatPriceToKoreanWon(stockEntity.getPrice()), 6.00);
+
+        when(rankingService.findStockPriceDetailAndUpdatePopularity(anyLong(), anyString())).thenReturn(Mono.just(dto));
+
+        // When
+        webTestClient.get()
+                .uri("/stocks/{stockId}/{stockCode}", stockId, stockCode)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.result.id").isEqualTo(dto.getId())
+                .jsonPath("$.result.code").isEqualTo(dto.getCode())
+                .jsonPath("$.result.name").isEqualTo(dto.getName())
+                .jsonPath("$.result.price").isEqualTo(dto.getPrice())
+                .jsonPath("$.result.priceDeltaPercentage").isEqualTo(dto.getPriceDeltaPercentage());
+
+        // Then
+        verify(rankingService).findStockPriceDetailAndUpdatePopularity(anyLong(), anyString());
+        verifyNoMoreInteractions(rankingService);
+    }
+
+    @Test
+    @DisplayName("주식 거래량 조회")
     void findAllStocksVolumeRankingSuccess() {
         // Given
         SearchVo searchVo = new SearchVo(1, 10);
@@ -63,7 +97,7 @@ public class RankingHandlerTest {
                 .price(new BigDecimal("1000"))
                 .build();
 
-        StockPriceDeltaRankApiDto dto = new StockPriceDeltaRankApiDto(stockEntity.getId(), stockEntity.getCode(), stockEntity.getName(), FormatUtil.formatPriceToKoreanWon(stockEntity.getPrice()), 6.00, stockEntity.getCreatedAt(), stockEntity.getUpdatedAt());
+        StockPriceDeltaRankApiDto dto = new StockPriceDeltaRankApiDto(stockEntity.getId(), stockEntity.getCode(), stockEntity.getName(), FormatUtil.formatPriceToKoreanWon(stockEntity.getPrice()), 6.00);
 
         when(rankingService.findAllStocksVolumeRanking(any(SearchVo.class))).thenReturn(Flux.just(dto));
 
@@ -90,13 +124,14 @@ public class RankingHandlerTest {
     }
 
     @Test
-    void findAllStocksVolumeRanking_When_RankingException() {
+    @DisplayName("주식 거래량 순위 조회 실패(예외)")
+    void findAllStocksVolumeRankingSucess() {
         // Given
         SearchVo searchVo = new SearchVo(1, 10);
 
         when(rankingService.findAllStocksVolumeRanking(any(SearchVo.class))).thenThrow(new RankingException(ApiResponseCode.STOCK_NOT_FOUND));
 
-        // When & Then
+        // When
         webTestClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/stocks/rankings/volume")
@@ -106,31 +141,58 @@ public class RankingHandlerTest {
                 .exchange()
                 .expectStatus().is5xxServerError(); // Assuming that the RankingException maps to a 4xx HTTP status
 
+        // Then
         verify(rankingService).findAllStocksVolumeRanking(any(SearchVo.class));
     }
 
     @Test
+    @DisplayName("주식 거래(거래량, 주가, 상승,하락폭 업데이트) 성공")
+    void updateStockPriceAndVolumeRankSuccess() {
+        // Given
+        Long stockId = 42L;
+        String stockCode = "377300";
+        BigDecimal newPrice = new BigDecimal(65000);
+        int tradeVolume = 1000;
+        StockPriceVolumeDto stockPriceVolumeDto = new StockPriceVolumeDto(stockId, stockCode, newPrice, tradeVolume);
+
+        when(rankingService.updateStockPriceAndVolumeRank(stockId, stockCode, newPrice, tradeVolume)).thenReturn(Mono.just(true));
+
+        // When
+        webTestClient.post()
+                .uri("/stocks/rankings/{stockId}/{stockCode}", stockId, stockCode)
+                .body(Mono.just(stockPriceVolumeDto), StockPriceVolumeDto.class)
+                .exchange()
+                .expectStatus().isOk();
+
+        // Then
+        verify(rankingService).updateStockPriceAndVolumeRank(stockId, stockCode, newPrice, tradeVolume);
+    }
+
+    @Test
+    @DisplayName("주식 거래량 증가 성공")
     void increaseVolumeRankSuccess() {
         // Given
         Long stockId = 42L;
         String stockCode = "377300";
-        double tradeVolume = 1000;
+        int tradeVolume = 1000;
         StockIncVolumeDto stockIncVolumeDto = new StockIncVolumeDto(stockId, stockCode, tradeVolume);
 
         when(rankingService.increaseVolumeRank(stockId, stockCode, tradeVolume)).thenReturn(Mono.just(500.0));
 
-        // When & Then
-        webTestClient.post()  // Assuming this is a POST request. If not, change this to GET or appropriate HTTP method.
-                .uri("/stocks/rankings/volume/increase") // Assuming this is the endpoint for the method.
+        // When
+        webTestClient.put()
+                .uri("/stocks/rankings/volume/increase")
                 .body(Mono.just(stockIncVolumeDto), StockIncVolumeDto.class)
                 .exchange()
                 .expectStatus().isOk();
 
+        // Then
         verify(rankingService).increaseVolumeRank(stockId, stockCode, tradeVolume);
     }
 
 
     @Test
+    @DisplayName("주식 인기순 조회 성공")
     void findAllStocksPopularityRankingSuccess() {
         // Given
         SearchVo searchVo = new SearchVo(1, 10);
@@ -141,7 +203,7 @@ public class RankingHandlerTest {
                 .price(new BigDecimal("1000"))
                 .build();
 
-        StockPriceDeltaRankApiDto dto = new StockPriceDeltaRankApiDto(stockEntity.getId(), stockEntity.getCode(), stockEntity.getName(), FormatUtil.formatPriceToKoreanWon(stockEntity.getPrice()), 6.00, stockEntity.getCreatedAt(), stockEntity.getUpdatedAt());
+        StockPriceDeltaRankApiDto dto = new StockPriceDeltaRankApiDto(stockEntity.getId(), stockEntity.getCode(), stockEntity.getName(), FormatUtil.formatPriceToKoreanWon(stockEntity.getPrice()), 6.00);
 
         when(rankingService.findAllStocksPopularityRanking(any(SearchVo.class))).thenReturn(Flux.just(dto));
 
@@ -167,6 +229,7 @@ public class RankingHandlerTest {
     }
 
     @Test
+    @DisplayName("주식 인기순 증가 성공")
     void increasePopularityRankSuccess() {
         // Given
         Long stockId = 42L;
@@ -175,17 +238,19 @@ public class RankingHandlerTest {
 
         when(rankingService.increasePopularityRank(stockId, stockCode)).thenReturn(Mono.just(500.0));
 
-        // When & Then
-        webTestClient.post()  // Assuming this is a POST request. If not, change this to GET or appropriate HTTP method.
-                .uri("/stocks/rankings/popularity/increase") // Assuming this is the endpoint for the method.
+        // When
+        webTestClient.put()
+                .uri("/stocks/rankings/popularity/increase")
                 .body(Mono.just(stockIncPopularityDto), StockIncPopularityDto.class)
                 .exchange()
                 .expectStatus().isOk();
 
+        // Then
         verify(rankingService).increasePopularityRank(stockId, stockCode);
     }
 
     @Test
+    @DisplayName("주가 상승 순위 조회 성공")
     void findAllStocksPriceDeltaRankingSuccess() {
         // Given
         SearchVo searchVo = new SearchVo(1, 10);
@@ -196,9 +261,9 @@ public class RankingHandlerTest {
                 .price(new BigDecimal("1000"))
                 .build();
 
-        StockPriceDeltaRankApiDto dto = new StockPriceDeltaRankApiDto(stockEntity.getId(), stockEntity.getCode(), stockEntity.getName(), FormatUtil.formatPriceToKoreanWon(stockEntity.getPrice()), 6.00, stockEntity.getCreatedAt(), stockEntity.getUpdatedAt());
+        StockPriceDeltaRankApiDto dto = new StockPriceDeltaRankApiDto(stockEntity.getId(), stockEntity.getCode(), stockEntity.getName(), FormatUtil.formatPriceToKoreanWon(stockEntity.getPrice()), 6.00);
 
-        when(rankingService.findAllStocksPriceDeltaRanking(any(SearchVo.class))).thenReturn(Flux.just(dto));
+        when(rankingService.findAllStocksPriceDeltaRanking(any(SearchVo.class), anyString())).thenReturn(Flux.just(dto));
 
         // When
         webTestClient.get()
@@ -218,26 +283,6 @@ public class RankingHandlerTest {
                 .jsonPath("$.result[0].priceDeltaPercentage").isEqualTo(dto.getPriceDeltaPercentage());
 
         // Then
-        verify(rankingService).findAllStocksPriceDeltaRanking(any(SearchVo.class));
-    }
-
-    @Test
-    void updatePriceDeltaSuccess() {
-        // Given
-        Long stockId = 42L;
-        String stockCode = "377300";
-        BigDecimal buyPrice = new BigDecimal("64000");
-        StockUpdatePriceDeltaDto stockUpdatePriceDeltaDto = new StockUpdatePriceDeltaDto(stockId, stockCode, buyPrice);
-
-        when(rankingService.updatePriceDelta(stockId, stockCode, buyPrice)).thenReturn(Mono.just(true));
-
-        // When & Then
-        webTestClient.post()  // Assuming this is a POST request. If not, change this to GET or appropriate HTTP method.
-                .uri("/stocks/rankings/price-delta") // Assuming this is the endpoint for the method.
-                .body(Mono.just(stockUpdatePriceDeltaDto), StockUpdatePriceDeltaDto.class)
-                .exchange()
-                .expectStatus().isOk();
-
-        verify(rankingService).updatePriceDelta(stockId, stockCode, buyPrice);
+        verify(rankingService).findAllStocksPriceDeltaRanking(any(SearchVo.class), anyString());
     }
 }
