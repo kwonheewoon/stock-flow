@@ -52,8 +52,8 @@ public class RankingHandler {
 
     public Mono<ServerResponse> findAllStocksVolumeRanking(ServerRequest serverRequest){
 
-        int page = Integer.parseInt(serverRequest.queryParam("page").orElse("1"));
-        int size = Integer.parseInt(serverRequest.queryParam("size").orElse("10"));
+        int page = Math.max(1, Integer.parseInt(serverRequest.queryParam("page").orElse("1")));
+        int size = Math.max(10, Integer.parseInt(serverRequest.queryParam("size").orElse("10")));
 
         return ServerResponse.ok()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -76,8 +76,8 @@ public class RankingHandler {
 
     public Mono<ServerResponse> findAllStocksPopularityRanking(ServerRequest serverRequest){
 
-        int page = Integer.parseInt(serverRequest.queryParam("page").orElse("1"));
-        int size = Integer.parseInt(serverRequest.queryParam("size").orElse("10"));
+        int page = Math.max(1, Integer.parseInt(serverRequest.queryParam("page").orElse("1")));
+        int size = Math.max(10, Integer.parseInt(serverRequest.queryParam("size").orElse("10")));
 
         return ServerResponse.ok()
                 .contentType(MediaType.APPLICATION_JSON)
@@ -99,8 +99,8 @@ public class RankingHandler {
 
     public Mono<ServerResponse> findAllStocksPriceDeltaRanking(ServerRequest serverRequest){
 
-        int page = Integer.parseInt(serverRequest.queryParam("page").orElse("1"));
-        int size = Integer.parseInt(serverRequest.queryParam("size").orElse("10"));
+        int page = Math.max(1, Integer.parseInt(serverRequest.queryParam("page").orElse("1")));
+        int size = Math.max(10, Integer.parseInt(serverRequest.queryParam("size").orElse("10")));
         String orderType = serverRequest.queryParam("orderType").orElse(StockOrderEnum.INC.name());
 
         return ServerResponse.ok()

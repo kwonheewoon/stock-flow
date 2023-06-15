@@ -32,7 +32,7 @@ public class RankingRouter {
     @RouterOperations(
             {
                     @RouterOperation(path = "/stocks/{stockId}/{stockCode}"
-                            , produces = {MediaType.APPLICATION_JSON_VALUE}, method = RequestMethod.GET, beanClass = RankingService.class, beanMethod = "findStockPriceDetailAndUpdatePopularity",
+                            , produces = {MediaType.APPLICATION_JSON_VALUE}, method = RequestMethod.GET, beanClass = RankingHandler.class, beanMethod = "findStockPriceDetailAndUpdatePopularity",
                             operation = @Operation(operationId = "findStockPriceDetailAndUpdatePopularity", responses = {
                                     @ApiResponse(responseCode = "FIND_ALL_VOLUME_RANK_OK", description = "종목 거래량 순위 조회 성공", content = @Content(schema = @Schema(implementation = CommonResponse.class))),
                                     @ApiResponse(responseCode = "STOCK_NOT_FOUND", description = "존재하지 않는 종목입니다."),
@@ -43,7 +43,7 @@ public class RankingRouter {
                                     })
                     ),
                     @RouterOperation(path = "/stocks/rankings/{stockId}/{stockCode}"
-                            , produces = {MediaType.APPLICATION_JSON_VALUE}, method = RequestMethod.POST, beanClass = RankingService.class, beanMethod = "updateStockPriceAndVolumeRank",
+                            , produces = {MediaType.APPLICATION_JSON_VALUE}, method = RequestMethod.POST, beanClass = RankingHandler.class, beanMethod = "updateStockPriceAndVolumeRank",
                             operation = @Operation(operationId = "updateStockPriceAndVolumeRank", responses = {
                                     @ApiResponse(responseCode = "STOCK_TRADE_OK", description = "주식 거래 완료", content = @Content(schema = @Schema(implementation = CommonResponse.class))),
                                     @ApiResponse(responseCode = "STOCK_NOT_FOUND", description = "존재하지 않는 종목입니다."),
@@ -55,7 +55,7 @@ public class RankingRouter {
                                     requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = StockPriceVolumeDto.class))))
                     ),
                     @RouterOperation(path = "/stocks/rankings/volume"
-                            , produces = {MediaType.APPLICATION_JSON_VALUE}, method = RequestMethod.GET, beanClass = RankingService.class, beanMethod = "findAllStocksVolumeRanking",
+                            , produces = {MediaType.APPLICATION_JSON_VALUE}, method = RequestMethod.GET, beanClass = RankingHandler.class, beanMethod = "findAllStocksVolumeRanking",
                             operation = @Operation(operationId = "findAllStocksVolumeRanking", responses = {
                                     @ApiResponse(responseCode = "FIND_ALL_VOLUME_RANK_OK", description = "종목 거래량 순위 조회 성공", content = @Content(schema = @Schema(implementation = CommonResponse.class))),
                                     @ApiResponse(responseCode = "SERVER_ERROR", description = "서버에 장애가 발생하였습니다."),
@@ -66,7 +66,7 @@ public class RankingRouter {
                                     })
                     ),
                     @RouterOperation(path = "/stocks/rankings/popularity"
-                            , produces = {MediaType.APPLICATION_JSON_VALUE}, method = RequestMethod.GET, beanClass = RankingService.class, beanMethod = "findAllStocksPopularityRanking",
+                            , produces = {MediaType.APPLICATION_JSON_VALUE}, method = RequestMethod.GET, beanClass = RankingHandler.class, beanMethod = "findAllStocksPopularityRanking",
                             operation = @Operation(operationId = "findAllStocksPopularityRanking", responses = {
                                     @ApiResponse(responseCode = "FIND_ALL_POPULARITY_RANK_OK", description = "종목 인기 순위 조회 성공", content = @Content(schema = @Schema(implementation = CommonResponse.class))),
                                     @ApiResponse(responseCode = "SERVER_ERROR", description = "서버에 장애가 발생하였습니다."),
@@ -77,7 +77,7 @@ public class RankingRouter {
                                     })
                     ),
                     @RouterOperation(path = "/stocks/rankings/price-delta"
-                            , produces = {MediaType.APPLICATION_JSON_VALUE}, method = RequestMethod.GET, beanClass = RankingService.class, beanMethod = "findAllStocksPriceDeltaRanking",
+                            , produces = {MediaType.APPLICATION_JSON_VALUE}, method = RequestMethod.GET, beanClass = RankingHandler.class, beanMethod = "findAllStocksPriceDeltaRanking",
                             operation = @Operation(operationId = "findAllStocksPriceDeltaRanking", responses = {
                                     @ApiResponse(responseCode = "FIND_ALL_PRICE_DELTA_RANK_OK", description = "종목 상승,하락가 순위 조회 성공", content = @Content(schema = @Schema(implementation = CommonResponse.class))),
                                     @ApiResponse(responseCode = "SERVER_ERROR", description = "서버에 장애가 발생하였습니다."),
@@ -88,7 +88,7 @@ public class RankingRouter {
                                     })
                     ),
                     @RouterOperation(path = "/stocks/rankings/volume/increase"
-                            , produces = {MediaType.APPLICATION_JSON_VALUE}, method = RequestMethod.PUT, beanClass = RankingService.class, beanMethod = "increaseVolumeRank",
+                            , produces = {MediaType.APPLICATION_JSON_VALUE}, method = RequestMethod.PUT, beanClass = RankingHandler.class, beanMethod = "increaseVolumeRank",
                             operation = @Operation(operationId = "increaseVolumeRank", responses = {
                                     @ApiResponse(responseCode = "INCREASE_VOLUME_RANK_OK", description = "종목 거래량 증가 성공", content = @Content(schema = @Schema(implementation = CommonResponse.class))),
                                     @ApiResponse(responseCode = "FIND_ALL_VOLUME_RANK_OK", description = "종목 거래량 순위 조회 성공"),
@@ -96,7 +96,7 @@ public class RankingRouter {
                                     requestBody = @RequestBody(content = @Content(schema = @Schema(implementation = StockIncVolumeDto.class))))
                     ),
                     @RouterOperation(path = "/stocks/rankings/popularity/increase"
-                            , produces = {MediaType.APPLICATION_JSON_VALUE}, method = RequestMethod.PUT, beanClass = RankingService.class, beanMethod = "increasePopularityRank",
+                            , produces = {MediaType.APPLICATION_JSON_VALUE}, method = RequestMethod.PUT, beanClass = RankingHandler.class, beanMethod = "increasePopularityRank",
                             operation = @Operation(operationId = "increasePopularityRank", responses = {
                                     @ApiResponse(responseCode = "INCREASE_POPULARITY_RANK_OK", description = "종목 인기 증가 성공", content = @Content(schema = @Schema(implementation = CommonResponse.class))),
                                     @ApiResponse(responseCode = "FIND_ALL_POPULARITY_RANK_OK", description = "종목 인기 순위 조회 성공"),

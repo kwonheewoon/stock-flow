@@ -51,7 +51,7 @@ BlockHound : 비동기 프로그램을 구현하기 위해 블로킹 메소드�
 /ranking-module.jar
 
 ## 서버 구동 방법
-java -jar /ranking-module --spring.profiles.active=local
+java -XX:+AllowRedefinitionToAddDeleteMethods -jar /ranking-module --spring.profiles.active=local
 
 ## 빌드 방법
 WORK_DIR :  stock-flow
@@ -62,7 +62,7 @@ jar 파일 빌드 \
 
 ## 빌드 후 서버 구동 방법
 빌드된 jar 파일 실행 \
-java -jar ./ranking-module/build/libs/ranking-module-0.0.1-SNAPSHOT.jar --spring.profiles.active=local
+java -XX:+AllowRedefinitionToAddDeleteMethods -jar ./ranking-module/build/libs/ranking-module-0.0.1-SNAPSHOT.jar --spring.profiles.active=local
 
 ## API 명세서
 ### Swagger Ui : http://localhost:8080/swagger-ui/webjars/swagger-ui/index.html
