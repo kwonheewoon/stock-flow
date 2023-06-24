@@ -43,6 +43,9 @@ server:
 
 logging:
   level:
+    org:
+      springframework:
+        r2dbc: DEBUG
     root: INFO
     org.springframework.r2dbc.core: debug
 

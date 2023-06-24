@@ -3,6 +3,7 @@ package io.khw.ranking.ranking.handler;
 import io.khw.common.constants.ApiResponseCode;
 import io.khw.common.enums.StockOrderEnum;
 import io.khw.common.response.CommonResponse;
+import io.khw.common.validate.CommonValidate;
 import io.khw.domain.common.vo.SearchVo;
 import io.khw.domain.stock.dto.StockIncPopularityDto;
 import io.khw.domain.stock.dto.StockIncVolumeDto;
@@ -22,6 +23,8 @@ import reactor.core.publisher.Mono;
 public class RankingHandler {
 
     private final RankingService rankingService;
+
+    private final CommonValidate validate;
 
     public Mono<ServerResponse> findStockPriceDetailAndUpdatePopularity(ServerRequest serverRequest){
 
@@ -44,6 +47,7 @@ public class RankingHandler {
         return ServerResponse.ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(request.bodyToMono(StockPriceVolumeDto.class)
+                        .doOnNext(stockPriceVolumeDto -> validate.validate(stockPriceVolumeDto))
                         .flatMap(requestBody -> rankingService.updateStockPriceAndVolumeRank(stockId, stockCode,
                                 requestBody.getBuyPrice(), requestBody.getTradeVolume()))
                         .map(result -> new CommonResponse<>(ApiResponseCode.STOCK_TRADE_OK)), CommonResponse.class);
